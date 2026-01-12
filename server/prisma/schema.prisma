@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum AssetStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  password  String
+  role      UserRole   @default(USER)
+  status    UserStatus @default(ACTIVE)
+
+  displayName String?
+  avatarUrl   String?
+  bio         String?
+
+  wallet    Wallet?
+  assets    Asset[]
+  auctions  Auction[]
+  bids      Bid[]
+  buyerEscrow  Escrow[]  @relation("BuyerEscrow")
+  sellerEscrow Escrow[]  @relation("SellerEscrow")
+  messages     Message[]
+  disputes     Dispute[]
+  notifications Notification[]
+  passwordResetTokens PasswordResetToken[]
+  buyerProposals BidProposal[] @relation("BuyerProposals")
+  sellerProposals BidProposal[] @relation("SellerProposals")
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([role])
+  @@index([status])
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  balance   Decimal  @default(0)
+  locked    Decimal  @default(0)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WalletTransaction {
+  id        String   @id @default(uuid())
+  walletId  String
+  amount    Decimal
+  type      WalletTransactionType
+  reference String?
+
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([walletId])
+}
+
+model Asset {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  images      String[]
+  metadata    Json
+  status      AssetStatus @default(DRAFT)
+  rejectionReason String?
+
+  ownerId     String
+  owner       User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  auction     Auction?
+  proposals   BidProposal[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+enum AuctionStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+model Auction {
+  id          String        @id @default(uuid())
+  assetId     String        @unique
+  sellerId    String
+
+  startTime   DateTime
+  endTime     DateTime
+
+  status      AuctionStatus @default(SCHEDULED)
+
+  asset       Asset         @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  seller      User          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  bids        Bid[]
+  escrow      Escrow?
+  messages    Message[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+  @@index([startTime, endTime])
+}
+
+model Bid {
+  id        String   @id @default(uuid())
+  amount    Decimal  @db.Decimal(10, 2)
+  auctionId String
+  bidderId  String
+  createdAt DateTime @default(now())
+
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder    User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  @@index([auctionId])
+  @@index([bidderId])
+}
+
+enum EscrowStatus {
+  HOLDING
+  RELEASED
+  REFUNDED
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+}
+
+model Escrow {
+  id        String       @id @default(uuid())
+  auctionId String       @unique
+  buyerId   String
+  sellerId  String
+  amount    Decimal
+  status    EscrowStatus @default(HOLDING)
+
+  auction   Auction      @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  buyer     User         @relation("BuyerEscrow", fields: [buyerId], references: [id])
+  seller    User         @relation("SellerEscrow", fields: [sellerId], references: [id])
+
+  createdAt DateTime     @default(now())
+  dispute   Dispute?
+
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  auctionId String
+  senderId  String
+  content   String
+
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([auctionId])
+  @@index([senderId])
+}
+
+model Dispute {
+  id        String        @id @default(uuid())
+  escrowId  String        @unique
+  buyerId   String
+  reason    String
+  status    DisputeStatus @default(OPEN)
+
+  escrow    Escrow        @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+  buyer     User          @relation(fields: [buyerId], references: [id])
+
+  createdAt DateTime      @default(now())
+  resolvedAt DateTime?
+
+  @@index([buyerId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String
+  action    String
+  metadata  Json
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+}
+
+enum NotificationType {
+  OUTBID
+  AUCTION_WON
+  DISPUTE_RESOLVED
+}
+
+model Notification {
+  id        String @id @default(uuid())
+  userId    String
+  type      NotificationType
+  message   String
+  read      Boolean @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
+}
+
+model BidProposal {
+  id String @id @default(uuid())
+  assetId String
+  sellerId String
+  buyerId String
+  proposedAmount Decimal
+  status ProposalStatus @default(PENDING)
+  parentProposalId String? // For counter-offers (proposal chains)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  asset Asset @relation(fields: [assetId], references: [id])
+  seller User @relation("SellerProposals", fields: [sellerId], references: [id])
+  buyer User @relation("BuyerProposals", fields: [buyerId], references: [id])
+  
+  @@index([assetId])
+  @@index([sellerId])
+  @@index([buyerId])
+  @@index([status])
+}
+
