@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { UserRole } from "@prisma/client";
 import prisma from "../src/config/prisma";
 import { hash } from "bcrypt";
@@ -5,7 +6,7 @@ import { hash } from "bcrypt";
 async function main() {
     console.log("🌱 Starting database seed...");
 
-    const password = await hash("Password123!", 10);
+    const password = await hash("12345678", 10);
 
     // Create Admin
     const admin = await prisma.user.upsert({
@@ -46,8 +47,8 @@ async function main() {
     console.log(`✅ User created: ${user.email}`);
 
     console.log("\nCredentials:");
-    console.log("Admin: admin@example.com / Password123!");
-    console.log("User:  user@example.com / Password123!");
+    console.log("Admin: admin@example.com / 12345678");
+    console.log("User:  user@example.com / 12345678");
 }
 
 main()
