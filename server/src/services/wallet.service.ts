@@ -1,6 +1,5 @@
-import { PrismaClient, Prisma } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { Prisma } from "@prisma/client";
+import prisma from "../config/prisma";
 
 export const walletService = {
     getWallet: async (userId: string) => {
@@ -11,7 +10,7 @@ export const walletService = {
     },
 
     addFunds: async (userId: string, amount: number) => {
-        return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        return await prisma.$transaction(async (tx) => {
             // 1. Get wallet
             const wallet = await tx.wallet.findUniqueOrThrow({
                 where: { userId },

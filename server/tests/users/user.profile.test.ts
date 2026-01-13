@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { password } from "../../src/utils/password";
 import { token } from "../../src/utils/jwt";
 
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 13: User Profiles", () => {
     const user1Email = `profile-test-1-${Date.now()}@example.com`;
@@ -34,7 +34,7 @@ describe("FEATURE 13: User Profiles", () => {
 
     afterAll(async () => {
         await prisma.user.deleteMany({ where: { email: { in: [user1Email, user2Email] } } });
-        await prisma.$disconnect();
+
     });
 
     describe("GET /api/v1/users/:id (Public Profile)", () => {

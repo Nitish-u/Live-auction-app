@@ -68,7 +68,7 @@ describe("Proposal Chat & Finalization", () => {
         await prisma.bidProposal.delete({ where: { id: proposalId } });
         await prisma.asset.delete({ where: { id: assetId } });
         await prisma.user.deleteMany({ where: { email: { in: [sellerEmail, buyerEmail] } } });
-        await prisma.$disconnect();
+
     });
 
     it("should create message", async () => {

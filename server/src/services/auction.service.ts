@@ -1,6 +1,5 @@
-import { PrismaClient, AuctionStatus } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { AuctionStatus } from "@prisma/client";
+import prisma from "../config/prisma";
 
 export const auctionService = {
     createAuction: async (userId: string, data: { assetId: string; startTime: string; endTime: string }) => {

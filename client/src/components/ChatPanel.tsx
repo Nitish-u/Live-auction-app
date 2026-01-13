@@ -90,7 +90,7 @@ export const ChatPanel = ({ auctionId, isParticipant }: ChatPanelProps) => {
 
     if (isLoading) {
         return (
-            <Card className="h-[500px] flex flex-col">
+            <Card className="h-125 flex flex-col">
                 <CardHeader className="py-3 px-4 border-b">
                     <CardTitle className="text-sm font-medium">Live Chat</CardTitle>
                 </CardHeader>
@@ -120,7 +120,7 @@ export const ChatPanel = ({ auctionId, isParticipant }: ChatPanelProps) => {
     }, []) || [];
 
     return (
-        <Card className="h-[500px] flex flex-col relative">
+        <Card className="h-125 flex flex-col relative">
             <CardHeader className="py-3 px-4 border-b flex flex-row justify-between items-center bg-card z-10">
                 <CardTitle className="text-sm font-medium">Live Chat</CardTitle>
                 <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export const ChatPanel = ({ auctionId, isParticipant }: ChatPanelProps) => {
                                                 <div
                                                     key={msg.id}
                                                     className={cn(
-                                                        "p-2 px-3 text-sm rounded-2xl break-words relative group hover:shadow-sm transition-shadow duration-200",
+                                                        "p-2 px-3 text-sm rounded-2xl wrap-break-word relative group hover:shadow-sm transition-shadow duration-200",
                                                         isMe
                                                             ? "bg-primary text-primary-foreground rounded-br-none"
                                                             : "bg-muted text-foreground rounded-bl-none",

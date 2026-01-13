@@ -41,13 +41,15 @@ describe("Admin Asset Review", () => {
     });
 
     afterAll(async () => {
-        await prisma.bid.deleteMany();
-        await prisma.dispute.deleteMany();
-        await prisma.escrow.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.asset.deleteMany();
-        await prisma.user.deleteMany();
-        await prisma.$disconnect();
+        if (adminId && userId) {
+            await prisma.bid.deleteMany({ where: { bidderId: { in: [adminId, userId] } } });
+            await prisma.dispute.deleteMany({ where: { buyerId: { in: [adminId, userId] } } });
+            await prisma.escrow.deleteMany({ where: { OR: [{ buyerId: { in: [adminId, userId] } }, { sellerId: { in: [adminId, userId] } }] } });
+            await prisma.auction.deleteMany({ where: { sellerId: { in: [adminId, userId] } } });
+            await prisma.asset.deleteMany({ where: { ownerId: { in: [adminId, userId] } } });
+            await prisma.user.deleteMany({ where: { id: { in: [adminId, userId] } } });
+        }
+
     });
 
     beforeEach(async () => {
@@ -72,11 +74,14 @@ describe("Admin Asset Review", () => {
 
     afterEach(async () => {
         // Must delete dependent records first
-        await prisma.bid.deleteMany();
-        await prisma.dispute.deleteMany();
-        await prisma.escrow.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.asset.deleteMany();
+        if (adminId && userId) {
+            const ids = [adminId, userId];
+            await prisma.bid.deleteMany({ where: { bidderId: { in: ids } } });
+            await prisma.dispute.deleteMany({ where: { buyerId: { in: ids } } });
+            await prisma.escrow.deleteMany({ where: { OR: [{ buyerId: { in: ids } }, { sellerId: { in: ids } }] } });
+            await prisma.auction.deleteMany({ where: { sellerId: { in: ids } } });
+            await prisma.asset.deleteMany({ where: { ownerId: { in: ids } } });
+        }
     });
 
     it("should fetch pending assets for admin", async () => {
@@ -87,7 +92,8 @@ describe("Admin Asset Review", () => {
         expect(response.status).toBe(200);
         expect(Array.isArray(response.body)).toBe(true);
         expect(response.body.length).toBeGreaterThan(0);
-        expect(response.body[0].id).toBe(pendingAssetId);
+        const ids = response.body.map((a: any) => a.id);
+        expect(ids).toContain(pendingAssetId);
     });
 
     it("should approve an asset", async () => {

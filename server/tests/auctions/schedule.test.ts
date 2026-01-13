@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("Feature 26: Schedule Auction", () => {
     let authToken: string;
@@ -41,7 +39,7 @@ describe("Feature 26: Schedule Auction", () => {
         await prisma.auction.deleteMany({ where: { sellerId } });
         await prisma.asset.deleteMany({ where: { ownerId: sellerId } });
         await prisma.user.delete({ where: { id: sellerId } });
-        await prisma.$disconnect();
+
     });
 
     it("should schedule auction with valid data", async () => {

@@ -1,8 +1,6 @@
 
-import { PrismaClient } from "@prisma/client";
+import prisma from "../config/prisma";
 import { getIO } from "../socket/socketServer";
-
-const prisma = new PrismaClient();
 
 export const messageService = {
     getMessages: async (auctionId: string, userId: string) => {

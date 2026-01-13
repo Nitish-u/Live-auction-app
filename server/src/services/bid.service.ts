@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../config/prisma";
 import { placeBidSchema } from "../validators/bid.schema";
 import { getIO } from "../socket/socketServer";
 import { notificationService } from "./notification.service";
-
-const prisma = new PrismaClient();
 
 export const bidService = {
     placeBid: async (bidderId: string, data: { auctionId: string; amount: number }) => {

@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "../config/prisma";
 
 export const getUserPublicProfile = async (id: string) => {
     return prisma.user.findUnique({

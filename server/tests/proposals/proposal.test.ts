@@ -3,7 +3,7 @@ import request from "supertest";
 import app from "../../src/app";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 31: Bid Proposal System", () => {
     const sellerEmail = `proposal-seller-${Date.now()}@example.com`;
@@ -67,7 +67,7 @@ describe("FEATURE 31: Bid Proposal System", () => {
                 email: { in: [sellerEmail, buyerEmail] }
             }
         });
-        await prisma.$disconnect();
+
     });
 
     it("should create proposal", async () => {

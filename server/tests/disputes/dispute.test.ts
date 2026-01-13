@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { token } from "../../src/utils/jwt";
 import { expect, describe, it, beforeAll, afterAll } from "vitest";
 
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 12: Dispute Resolution", () => {
     let adminToken: string;
@@ -18,13 +18,14 @@ describe("FEATURE 12: Dispute Resolution", () => {
     let escrowId: string;
 
     beforeAll(async () => {
-        await prisma.auditLog.deleteMany();
-        await prisma.dispute.deleteMany();
-        await prisma.escrow.deleteMany();
-        await prisma.bid.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.wallet.deleteMany();
-        await prisma.user.deleteMany();
+        const emails = ["admin@platform.com", "seller@platform.com", "buyer@platform.com"];
+        await prisma.auditLog.deleteMany(); // Keeping global for audit log if no actor link easily available or safe
+        await prisma.dispute.deleteMany({ where: { buyer: { email: { in: emails } } } });
+        await prisma.escrow.deleteMany({ where: { OR: [{ buyer: { email: { in: emails } } }, { seller: { email: { in: emails } } }] } });
+        await prisma.bid.deleteMany({ where: { bidder: { email: { in: emails } } } });
+        await prisma.auction.deleteMany({ where: { seller: { email: { in: emails } } } });
+        await prisma.wallet.deleteMany({ where: { user: { email: { in: emails } } } });
+        await prisma.user.deleteMany({ where: { email: { in: emails } } });
 
         // Admin
         const admin = await prisma.user.create({
@@ -74,7 +75,7 @@ describe("FEATURE 12: Dispute Resolution", () => {
     });
 
     afterAll(async () => {
-        await prisma.$disconnect();
+
     });
 
     it("should allow BUYER to raise a dispute", async () => {

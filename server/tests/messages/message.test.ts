@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { token } from "../../src/utils/jwt";
 import { expect, describe, it, beforeAll, afterAll } from "vitest";
 
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 11: Messaging Access Control", () => {
     let sellerId: string;
@@ -17,11 +17,13 @@ describe("FEATURE 11: Messaging Access Control", () => {
     let auctionId: string;
 
     beforeAll(async () => {
-        await prisma.message.deleteMany();
-        await prisma.bid.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.wallet.deleteMany();
-        await prisma.user.deleteMany();
+        const emails = ["msg-seller@example.com", "msg-bidder@example.com", "msg-random@example.com", "msg-loser@ex.com"];
+        await prisma.message.deleteMany({ where: { sender: { email: { in: emails } } } });
+        await prisma.bid.deleteMany({ where: { bidder: { email: { in: emails } } } });
+        await prisma.auction.deleteMany({ where: { seller: { email: { in: emails } } } });
+        await prisma.asset.deleteMany({ where: { owner: { email: { in: emails } } } });
+        await prisma.wallet.deleteMany({ where: { user: { email: { in: emails } } } });
+        await prisma.user.deleteMany({ where: { email: { in: emails } } });
 
         // Users
         const seller = await prisma.user.create({
@@ -63,7 +65,7 @@ describe("FEATURE 11: Messaging Access Control", () => {
     });
 
     afterAll(async () => {
-        await prisma.$disconnect();
+
     });
 
     describe("Access Control", () => {

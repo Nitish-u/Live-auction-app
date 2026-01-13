@@ -97,7 +97,7 @@ export function AssetReviewTab() {
                         <CardContent className="p-3 flex items-center justify-between gap-4">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                 {/* Thumbnail */}
-                                <div className="h-12 w-12 flex-shrink-0 rounded overflow-hidden bg-muted">
+                                <div className="h-12 w-12 shrink-0 rounded overflow-hidden bg-muted">
                                     <img
                                         src={asset.images && asset.images.length > 0 ? asset.images[0] : "https://via.placeholder.com/150?text=No+Image"}
                                         alt={asset.title}

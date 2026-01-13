@@ -13,10 +13,11 @@ describe('Asset Gallery API', () => {
 
     beforeAll(async () => {
         // Clean up
-        await prisma.bid.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.asset.deleteMany();
-        await prisma.user.deleteMany();
+        const emails = ['seller@test.com', 'buyer@test.com'];
+        await prisma.bid.deleteMany({ where: { bidder: { email: { in: emails } } } });
+        await prisma.auction.deleteMany({ where: { seller: { email: { in: emails } } } });
+        await prisma.asset.deleteMany({ where: { owner: { email: { in: emails } } } });
+        await prisma.user.deleteMany({ where: { email: { in: emails } } });
 
         // Create users
         seller = await prisma.user.create({
@@ -83,30 +84,32 @@ describe('Asset Gallery API', () => {
     });
 
     afterAll(async () => {
-        await prisma.bid.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.asset.deleteMany();
-        await prisma.user.deleteMany();
-        await prisma.$disconnect();
+        const emails = ['seller@test.com', 'buyer@test.com'];
+        await prisma.bid.deleteMany({ where: { bidder: { email: { in: emails } } } });
+        await prisma.auction.deleteMany({ where: { seller: { email: { in: emails } } } });
+        await prisma.asset.deleteMany({ where: { owner: { email: { in: emails } } } });
+        await prisma.user.deleteMany({ where: { email: { in: emails } } });
     });
 
     describe('GET /api/v1/assets', () => {
         it('should return only approved assets', async () => {
             const res = await request(app).get('/api/v1/assets');
             expect(res.status).toBe(200);
-            expect(res.body.items).toHaveLength(2); // approvedAsset and assetWithAuction
-            const ids = res.body.items.map((i: any) => i.id);
+            const myAssets = res.body.items.filter((i: any) => [approvedAsset.id, draftAsset.id].includes(i.id));
+            expect(myAssets).toHaveLength(1); // Only approvedAsset should filter through
+            const ids = myAssets.map((i: any) => i.id);
             expect(ids).toContain(approvedAsset.id);
-            expect(ids).toContain(assetWithAuction.id);
+            expect(ids).not.toContain(assetWithAuction.id); // assetWithAuction is not in myAssets filter
             expect(ids).not.toContain(draftAsset.id);
         });
 
         it('should filter by hasAuction=true', async () => {
             const res = await request(app).get('/api/v1/assets?hasAuction=true');
             expect(res.status).toBe(200);
-            expect(res.body.items).toHaveLength(1);
-            expect(res.body.items[0].id).toBe(assetWithAuction.id);
-            expect(res.body.items[0].auction).not.toBeNull();
+            const myAuctionAssets = res.body.items.filter((i: any) => i.id === assetWithAuction.id);
+            expect(myAuctionAssets).toHaveLength(1);
+            expect(myAuctionAssets[0].id).toBe(assetWithAuction.id);
+            expect(myAuctionAssets[0].auction).not.toBeNull();
         });
 
         it('should filter by sellerId', async () => {

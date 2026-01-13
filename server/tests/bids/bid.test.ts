@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 8: Bidding Logic", () => {
     // Users
@@ -76,7 +74,7 @@ describe("FEATURE 8: Bidding Logic", () => {
 
     afterAll(async () => {
         await prisma.user.deleteMany({ where: { email: { in: [sellerEmail, bidder1Email, bidder2Email] } } });
-        await prisma.$disconnect();
+
     });
 
     describe("Placing Bids", () => {

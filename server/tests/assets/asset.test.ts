@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 4: Asset Creation", () => {
     const email = `asset-test-${Date.now()}@example.com`;
@@ -21,7 +19,7 @@ describe("FEATURE 4: Asset Creation", () => {
 
     afterAll(async () => {
         await prisma.user.deleteMany({ where: { email } });
-        await prisma.$disconnect();
+
     });
 
     it("should perform full asset lifecycle", async () => {

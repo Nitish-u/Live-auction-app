@@ -1,7 +1,6 @@
+import 'dotenv/config';
 import { describe, it, expect } from "vitest";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 1: User & Wallet Schema", () => {
     it("should enforce unique email constraint", async () => {

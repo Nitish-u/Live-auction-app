@@ -4,7 +4,7 @@ import app from "../../src/app";
 import { PrismaClient } from "@prisma/client";
 import { token } from "../../src/utils/jwt";
 
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 3: Wallet Funding", () => {
     const email = `wallet-test-${Date.now()}@example.com`;
@@ -24,7 +24,7 @@ describe("FEATURE 3: Wallet Funding", () => {
 
     afterAll(async () => {
         await prisma.user.deleteMany({ where: { email } });
-        await prisma.$disconnect();
+
     });
 
     describe("GET /api/v1/wallet", () => {
@@ -81,7 +81,7 @@ describe("FEATURE 3: Wallet Funding", () => {
                 .set("Authorization", `Bearer ${authToken}`)
                 .send({ amount: -100 });
 
-            expect(response.status).toBe(500); // 500 because validation error might not be mapped to 400 yet globally, or Zod error
+            expect(response.status).toBe(400); // 500 because validation error might not be mapped to 400 yet globally, or Zod error
             // Actually Zod throws, if global handler catches it, it might be 500 if not typed as AppError
         });
 
@@ -91,7 +91,7 @@ describe("FEATURE 3: Wallet Funding", () => {
                 .set("Authorization", `Bearer ${authToken}`)
                 .send({ amount: 0 });
 
-            expect(response.status).toBe(500);
+            expect(response.status).toBe(400);
         });
     });
 });

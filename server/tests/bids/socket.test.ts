@@ -1,12 +1,10 @@
 
 import request from "supertest";
 import app from "../../src/app";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../../src/config/prisma";
+import { vi, describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
 import { token } from "../../src/utils/jwt";
-import { expect, describe, it, beforeAll, afterAll, vi, beforeEach, afterEach } from "vitest";
 import * as socketServer from "../../src/socket/socketServer";
-
-const prisma = new PrismaClient();
 
 // Mock Socket
 const mockEmit = vi.fn();
@@ -20,10 +18,30 @@ describe("Feature 10: Realtime Bidding Socket", () => {
 
     beforeAll(async () => {
         // Cleanup
-        await prisma.bid.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.wallet.deleteMany();
-        await prisma.user.deleteMany();
+        // Cleanup
+        await prisma.bidProposal.deleteMany({
+            where: {
+                OR: [
+                    { seller: { email: { in: ["socket-seller@example.com", "socket-bidder@example.com"] } } },
+                    { buyer: { email: { in: ["socket-seller@example.com", "socket-bidder@example.com"] } } }
+                ]
+            }
+        });
+        await prisma.bid.deleteMany({
+            where: { bidder: { email: { in: ["socket-seller@example.com", "socket-bidder@example.com"] } } }
+        });
+        await prisma.auction.deleteMany({
+            where: { seller: { email: { in: ["socket-seller@example.com", "socket-bidder@example.com"] } } }
+        });
+        await prisma.asset.deleteMany({
+            where: { owner: { email: { in: ["socket-seller@example.com", "socket-bidder@example.com"] } } }
+        });
+        await prisma.wallet.deleteMany({
+            where: { user: { email: { in: ["socket-seller@example.com", "socket-bidder@example.com"] } } }
+        });
+        await prisma.user.deleteMany({
+            where: { email: { in: ["socket-seller@example.com", "socket-bidder@example.com"] } }
+        });
 
         // Setup User
         const seller = await prisma.user.create({
@@ -62,7 +80,7 @@ describe("Feature 10: Realtime Bidding Socket", () => {
     });
 
     afterAll(async () => {
-        await prisma.$disconnect();
+
     });
 
     it("should emit bid_placed socket event on successful bid", async () => {

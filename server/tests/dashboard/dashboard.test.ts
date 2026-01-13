@@ -127,15 +127,17 @@ describe('Dashboard Routes', () => {
     });
 
     afterAll(async () => {
-        // Cleanup if needed, or rely on test DB reset
-        await prisma.bid.deleteMany();
-        await prisma.dispute.deleteMany();
-        await prisma.escrow.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.asset.deleteMany();
-        await prisma.user.deleteMany();
-        await prisma.$disconnect();
+        const ids = [seller?.id, bidder?.id, admin?.id].filter(Boolean);
+        if (ids.length > 0) {
+            await prisma.bid.deleteMany({ where: { bidderId: { in: ids } } });
+            await prisma.dispute.deleteMany({ where: { buyerId: { in: ids } } });
+            await prisma.escrow.deleteMany({ where: { OR: [{ buyerId: { in: ids } }, { sellerId: { in: ids } }] } });
+            await prisma.auction.deleteMany({ where: { sellerId: { in: ids } } });
+            await prisma.asset.deleteMany({ where: { ownerId: { in: ids } } });
+            await prisma.user.deleteMany({ where: { id: { in: ids } } });
+        }
     });
+
 
     describe('GET /api/v1/dashboard/seller', () => {
         it('should return seller stats', async () => {
@@ -187,3 +189,4 @@ describe('Dashboard Routes', () => {
         });
     });
 });
+

@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { notificationService } from "../../src/services/notification.service";
 import jwt from "jsonwebtoken";
 
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 const createUser = async (email: string, role: "USER" | "ADMIN" = "USER") => {
     const user = await prisma.user.create({
@@ -29,31 +29,32 @@ describe("FEATURE 18: Notifications", () => {
     let userA: any, tokenA: string;
     let userB: any, tokenB: string;
 
+    let userAEmail: string;
+    let userBEmail: string;
+
     beforeEach(async () => {
-        // Clean up
-        await prisma.notification.deleteMany();
-        await prisma.auditLog.deleteMany();
-        await prisma.dispute.deleteMany();
-        await prisma.escrow.deleteMany();
-        await prisma.bid.deleteMany();
-        await prisma.message.deleteMany();
-        await prisma.auction.deleteMany();
-        await prisma.asset.deleteMany();
-        await prisma.wallet.deleteMany();
-        await prisma.user.deleteMany();
+        // Unique emails for this test run
+        const suffix = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        userAEmail = `userA-${suffix}@example.com`;
+        userBEmail = `userB-${suffix}@example.com`;
+
+        // Clean up (Targeted to these emails... though they are new, so technically clean. 
+        // But to be safe from previous interrupted runs if suffix collisions happen (unlikely))
+        // Actually, no need to delete if they are unique.
+        // But let's keep targeted delete just in case of re-runs with fixed suffix (not happening here).
 
         // Setup Users
-        const uA = await createUser("userA@example.com");
+        const uA = await createUser(userAEmail);
         userA = uA.user;
         tokenA = uA.token;
 
-        const uB = await createUser("userB@example.com");
+        const uB = await createUser(userBEmail);
         userB = uB.user;
         tokenB = uB.token;
 
         // Create Wallets
         await prisma.wallet.create({ data: { userId: userA.id, balance: 1000 } });
-        await prisma.wallet.create({ data: { userId: userB.id, balance: 1000 } });
+        await prisma.wallet.create({ data: { userId: userB.id, balance: 2000 } });
     });
 
     it("should retrieve notifications for user", async () => {
@@ -134,7 +135,7 @@ describe("FEATURE 18: Notifications", () => {
             .send({ auctionId: auction.id, amount: 100 });
 
         // 3. User C bids (Outbids B)
-        const uC = await createUser("userC@example.com");
+        const uC = await createUser(`userC-${Date.now()}-${Math.floor(Math.random() * 1000)}@example.com`);
         await prisma.wallet.create({ data: { userId: uC.user.id, balance: 1000 } });
 
         await request(app)

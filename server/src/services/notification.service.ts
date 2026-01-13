@@ -1,6 +1,5 @@
-import { PrismaClient, Notification, NotificationType } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { Notification, NotificationType } from "@prisma/client";
+import prisma from "../config/prisma";
 
 export class NotificationService {
     /**

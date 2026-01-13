@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { createAssetSchema, updateAssetSchema } from "../validators/asset.schema";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
+import prisma from "../config/prisma";
 
 export const assetService = {
     createAsset: async (userId: string, input: z.infer<typeof createAssetSchema>) => {

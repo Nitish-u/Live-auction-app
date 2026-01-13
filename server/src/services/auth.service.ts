@@ -1,17 +1,16 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { password } from "../utils/password";
 import { token } from "../utils/jwt";
 import { registerSchema, loginSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from "../validators/auth.schema";
 import { emailService } from "./email.service";
 import { z } from "zod";
 import crypto from "crypto";
-
-const prisma = new PrismaClient();
+import prisma from "../config/prisma";
 
 export const authService = {
     register: async (input: z.infer<typeof registerSchema>) => {
         // 1. Transactional Create
-        return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        return await prisma.$transaction(async (tx: any) => {
             // 2. Check duplicate
             const existing = await tx.user.findUnique({ where: { email: input.email } });
             if (existing) {

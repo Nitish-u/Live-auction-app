@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 17: Change Password", () => {
     const email = `changepw-test-${Date.now()}@example.com`;
@@ -24,7 +22,7 @@ describe("FEATURE 17: Change Password", () => {
 
     afterAll(async () => {
         await prisma.user.deleteMany({ where: { email } });
-        await prisma.$disconnect();
+
     });
 
     describe("POST /api/v1/auth/change-password", () => {

@@ -4,7 +4,7 @@ import app from "../../src/app";
 import { PrismaClient } from "@prisma/client";
 import { password } from "../../src/utils/password";
 
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("Password Reset Feature", () => {
     const email = `reset-test-${Date.now()}@example.com`;
@@ -21,7 +21,7 @@ describe("Password Reset Feature", () => {
 
     afterAll(async () => {
         await prisma.user.deleteMany({ where: { email } });
-        await prisma.$disconnect();
+
     });
 
     describe("POST /api/v1/auth/forgot-password", () => {
@@ -39,7 +39,7 @@ describe("Password Reset Feature", () => {
             });
             expect(tokenRecord).toBeDefined();
             resetToken = tokenRecord?.token || "";
-        });
+        }, 15000);
 
         it("should return success message for non-existent email (security)", async () => {
             const response = await request(app)

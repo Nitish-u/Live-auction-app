@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 6: Auction Scheduling", () => {
     // Users
@@ -49,7 +47,7 @@ describe("FEATURE 6: Auction Scheduling", () => {
 
     afterAll(async () => {
         await prisma.user.deleteMany({ where: { email: { in: [sellerEmail, buyerEmail] } } });
-        await prisma.$disconnect();
+
     });
 
     describe("Auction Creation", () => {

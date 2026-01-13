@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../src/config/prisma";
 
 describe("FEATURE 5: Admin Asset Review", () => {
     // Users
@@ -83,7 +81,7 @@ describe("FEATURE 5: Admin Asset Review", () => {
 
     afterAll(async () => {
         await prisma.user.deleteMany({ where: { email: { in: [adminEmail, userEmail] } } });
-        await prisma.$disconnect();
+
     });
 
     describe("Access Control", () => {

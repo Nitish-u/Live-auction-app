@@ -1,8 +1,6 @@
 
-import { PrismaClient } from "@prisma/client";
+import prisma from "../config/prisma";
 import { notificationService } from "./notification.service";
-
-const prisma = new PrismaClient();
 
 export const settlementService = {
     settleAuction: async (auctionId: string) => {

@@ -83,7 +83,7 @@ export function DisputeManagerTab() {
                                 <span className="text-xs text-muted-foreground">{dispute.escrow.auction.title}</span>
                             </TableCell>
                             <TableCell>{dispute.buyer.email}</TableCell>
-                            <TableCell className="max-w-[200px] truncate" title={dispute.reason}>
+                            <TableCell className="max-w-50 truncate" title={dispute.reason}>
                                 {dispute.reason}
                             </TableCell>
                             <TableCell className="font-medium">

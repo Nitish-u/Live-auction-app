@@ -56,7 +56,7 @@ describe("Asset Detail & Related Endpoints", () => {
         await prisma.auction.deleteMany({ where: { assetId: { in: [assetId, asset2Id] } } });
         await prisma.asset.deleteMany({ where: { id: { in: [assetId, asset2Id] } } });
         await prisma.user.delete({ where: { id: sellerId } });
-        await prisma.$disconnect();
+
     });
 
     describe("GET /api/v1/assets/:id", () => {
