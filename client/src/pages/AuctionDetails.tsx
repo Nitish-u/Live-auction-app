@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
-import { fetchAuction, fetchBids } from "../lib/api";
+import { fetchAuction, fetchBids, getFriendlyErrorMessage, type Message, type Bid, type Auction } from "../lib/api";
 import { io } from "socket.io-client";
 import { useEffect } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
@@ -20,6 +20,14 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+interface BidPlacedPayload {
+    amount: number;
+    timestamp: string;
+    bidder: {
+        email: string;
+    }
+}
+
 export const AuctionDetails = () => {
     const { id } = useParams<{ id: string }>();
     const queryClient = useQueryClient();
@@ -34,17 +42,20 @@ export const AuctionDetails = () => {
             socket.emit("join_auction", { auctionId: id });
         });
 
-        socket.on("bid_placed", (payload: any) => {
+        socket.on("bid_placed", (payload: BidPlacedPayload) => {
             console.log("Bid Placed Event:", payload);
-            const newBid = {
+            const newBid: Bid = {
                 id: Math.random().toString(), // Temp ID until refresh
                 amount: Number(payload.amount),
                 createdAt: payload.timestamp,
-                bidder: payload.bidder
+                bidder: {
+                    id: "temp", // incomplete
+                    email: payload.bidder.email,
+                }
             };
 
             // Update Bid List
-            queryClient.setQueryData(["bids", id], (old: any[] | undefined) => {
+            queryClient.setQueryData(["bids", id], (old: Bid[] | undefined) => {
                 if (!old) return [newBid];
                 // Prevent duplicates if API updated first (unlikely with push)
                 if (old.some(b => b.createdAt === newBid.createdAt)) return old;
@@ -52,7 +63,7 @@ export const AuctionDetails = () => {
             });
 
             // Update Auction Details (Highest Bid)
-            queryClient.setQueryData(["auction", id], (old: any | undefined) => {
+            queryClient.setQueryData(["auction", id], (old: Auction | undefined) => {
                 if (!old) return old;
                 // Add to bids array if exists, or update logic if we display top bid specially
                 const currentBids = old.bids || [];
@@ -67,9 +78,9 @@ export const AuctionDetails = () => {
             });
         });
 
-        socket.on("message_sent", (payload: any) => {
+        socket.on("message_sent", (payload: Message) => {
             console.log("Message Sent Event:", payload);
-            queryClient.setQueryData(["messages", id], (old: any[] | undefined) => {
+            queryClient.setQueryData(["messages", id], (old: Message[] | undefined) => {
                 if (!old) return [payload];
                 if (old.some(m => m.id === payload.id)) return old;
                 return [...old, payload];
@@ -92,7 +103,7 @@ export const AuctionDetails = () => {
     const currentUser = getCurrentUser();
     const isSeller = auction?.sellerId === currentUser?.sub; // Need sellerId in auction response?
     // fetchAuction returns seller: { id, email }
-    const isParticipant = isSeller || (auction?.bids?.some((b: any) => b.bidder.email === currentUser?.email) ?? false);
+    const isParticipant = isSeller || (auction?.bids?.some((b: { bidder: { email: string } }) => b.bidder.email === currentUser?.email) ?? false);
     // Wait, frontend bids list might not have bidder ID, only email? 
     // API: bids: { amount, bidder: { email } }[]
     // Token has sub (id). 
@@ -329,8 +340,8 @@ const RaiseDisputeButton = ({ escrowId }: { escrowId: string }) => {
             setOpen(false);
             queryClient.invalidateQueries({ queryKey: ["auction"] });
         },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to raise dispute");
+        onError: (err: unknown) => {
+            toast.error(getFriendlyErrorMessage(err));
         }
     });
 

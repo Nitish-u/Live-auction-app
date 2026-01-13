@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
-import { login, getFriendlyErrorMessage } from "@/lib/api";
+import { login, getFriendlyErrorMessage, type LoginParams } from "@/lib/api";
 
 export function LoginPage() {
     const navigate = useNavigate();
@@ -16,7 +16,7 @@ export function LoginPage() {
         return <Navigate to="/dashboard" replace />;
     }
 
-    const handleLogin = async (values: any) => {
+    const handleLogin = async (values: LoginParams) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -24,7 +24,7 @@ export function LoginPage() {
             setAuth(response.token, response.user);
             toast.success("Welcome back!");
             navigate("/dashboard");
-        } catch (err: any) {
+        } catch (err: unknown) {
             const message = getFriendlyErrorMessage(err);
             setError(message);
             toast.error(message);

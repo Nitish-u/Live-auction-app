@@ -35,7 +35,7 @@ export function ForgotPassword() {
             const response = await forgotPassword(values.email);
             setSuccessMessage(response.message);
             toast.success("Reset link sent!");
-        } catch (err: any) {
+        } catch (err: unknown) {
             const message = getFriendlyErrorMessage(err);
             setError(message);
             toast.error(message);

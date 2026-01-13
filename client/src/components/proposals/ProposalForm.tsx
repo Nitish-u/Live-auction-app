@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { api } from "@/lib/api"
+import { api, getFriendlyErrorMessage } from "@/lib/api"
 
 const proposalSchema = z.object({
     proposedAmount: z.number().min(1, "Amount must be greater than 0")
@@ -47,9 +47,8 @@ export function ProposalForm({ assetId, sellerId, onSuccess }: ProposalFormProps
             toast.success("Proposal sent! Seller will review it.")
             form.reset()
             onSuccess?.()
-        } catch (error) {
-            const errorMessage = (error as any).response?.data?.message || "Failed to send proposal"
-            toast.error(errorMessage)
+        } catch (error: unknown) {
+            toast.error(getFriendlyErrorMessage(error))
         } finally {
             setSubmitting(false)
         }

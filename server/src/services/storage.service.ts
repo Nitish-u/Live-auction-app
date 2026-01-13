@@ -19,24 +19,23 @@ if (isCloudEnabled() && storageConfig.cloud.provider === "s3" && storageConfig.c
     })
 }
 
-export async function uploadAssetImage(
+// Helper for generic file upload
+async function uploadFile(
     file: Express.Multer.File,
-    directory: string = "assets"
+    directory: string,
+    allowedMimes: string[],
+    maxSize: number
 ): Promise<UploadResult> {
     if (!file) {
         throw new Error("No file provided")
     }
 
-    // Validate file type
-    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
     if (!allowedMimes.includes(file.mimetype)) {
-        throw new Error("Invalid file type. Only JPEG, PNG, WebP, GIF allowed.")
+        throw new Error(`Invalid file type. Allowed: ${allowedMimes.join(", ")}`)
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024
     if (file.size > maxSize) {
-        throw new Error("File size exceeds 5MB limit")
+        throw new Error(`File size exceeds ${(maxSize / 1024 / 1024).toFixed(0)}MB limit`)
     }
 
     // Try cloud upload first
@@ -62,6 +61,21 @@ export async function uploadAssetImage(
     }
 
     throw new Error("No storage backend available")
+}
+
+export async function uploadAssetImage(
+    file: Express.Multer.File,
+    directory: string = "assets"
+): Promise<UploadResult> {
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    return uploadFile(file, directory, allowedMimes, 5 * 1024 * 1024)
+}
+
+export async function uploadProposalDoc(
+    file: Express.Multer.File
+): Promise<UploadResult> {
+    const allowedMimes = ["application/pdf", "image/jpeg", "image/png"]
+    return uploadFile(file, "proposals/docs", allowedMimes, 10 * 1024 * 1024) // 10MB
 }
 
 async function uploadToCloud(

@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -5,16 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ArrowRight } from "lucide-react"
-import { api } from "@/lib/api"
-
-interface Auction {
-    id: string
-    asset: { title: string }
-    status: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED"
-    startTime: string
-    endTime: string
-    createdAt: string
-}
+import { api, type Asset, type Auction } from "@/lib/api"
 
 export function RecentAuctionsTable() {
     const navigate = useNavigate()
@@ -25,11 +17,11 @@ export function RecentAuctionsTable() {
             const response = await api.get("/assets/my")
             // The assets endpoint includes auction data. We can filter assets that have auctions.
             // This avoids needing a new backend endpoint for "my auctions".
-            const assetsWithAuctions = response.data.assets.filter((asset: any) => asset.auction);
+            const assetsWithAuctions = response.data.assets.filter((asset: Asset) => asset.auction);
 
             return assetsWithAuctions
-                .map((asset: any) => ({
-                    ...asset.auction,
+                .map((asset: Asset) => ({
+                    ...asset.auction!,
                     asset: { title: asset.title }
                 }))
                 .filter((a: Auction) => a.status !== "CANCELLED")
@@ -114,7 +106,7 @@ export function RecentAuctionsTable() {
 function statusVariant(
     status: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED"
 ) {
-    const variants: Record<string, any> = {
+    const variants: Record<string, "outline" | "default" | "secondary" | "destructive"> = {
         SCHEDULED: "outline",
         LIVE: "default",
         ENDED: "secondary",

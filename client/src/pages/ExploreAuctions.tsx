@@ -26,7 +26,7 @@ export const ExploreAuctions = () => {
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold">Explore Auctions</h1>
                 <div className="flex gap-4">
-                    <Select onValueChange={(v) => setStatus(v === "ALL" ? undefined : v as any)}>
+                    <Select onValueChange={(v) => setStatus(v === "ALL" ? undefined : v as "SCHEDULED" | "LIVE")}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Filter by Status" />
                         </SelectTrigger>
@@ -37,7 +37,7 @@ export const ExploreAuctions = () => {
                         </SelectContent>
                     </Select>
 
-                    <Select onValueChange={(v) => setSortBy(v as any)} defaultValue="startTime">
+                    <Select onValueChange={(v) => setSortBy(v as "startTime" | "endTime")} defaultValue="startTime">
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Sort By" />
                         </SelectTrigger>

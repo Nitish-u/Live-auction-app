@@ -49,7 +49,7 @@ describe("Admin Dashboard", () => {
             isAuthenticated: true
         })
 
-        const navigate = vi.fn()
+
         // Mock useNavigate inside component if possible, but simpler to check null return or specific behavior
         // Actually AdminDashboard returns null if not admin
         const { container } = renderWithProviders(<AdminDashboard />)

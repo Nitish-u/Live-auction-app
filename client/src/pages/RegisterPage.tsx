@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
-import { register, getFriendlyErrorMessage } from "@/lib/api";
+import { register, getFriendlyErrorMessage, type RegisterParams } from "@/lib/api";
 
 export function RegisterPage() {
     const navigate = useNavigate();
@@ -16,7 +16,7 @@ export function RegisterPage() {
         return <Navigate to="/dashboard" replace />;
     }
 
-    const handleRegister = async (values: any) => {
+    const handleRegister = async (values: RegisterParams) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -28,7 +28,7 @@ export function RegisterPage() {
             setAuth(response.token, response.user);
             toast.success("Account created! Welcome.");
             navigate("/dashboard");
-        } catch (err: any) {
+        } catch (err: unknown) {
             const message = getFriendlyErrorMessage(err);
             setError(message);
             toast.error(message);

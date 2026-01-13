@@ -38,7 +38,7 @@ export function AssetReviewTab() {
             toast.success("Asset approved!")
             setSelectedAsset(null) // Close dialog if open
             refetch()
-        } catch (error) {
+        } catch {
             toast.error("Failed to approve asset")
         } finally {
             setActionLoading(null)
@@ -55,7 +55,7 @@ export function AssetReviewTab() {
             toast.success("Asset rejected")
             setSelectedAsset(null) // Close dialog if open
             refetch()
-        } catch (error) {
+        } catch {
             toast.error("Failed to reject asset")
         } finally {
             setActionLoading(null)

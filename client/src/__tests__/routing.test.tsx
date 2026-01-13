@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AppLayout } from "../components/layout/AppLayout";
+// import { AppLayout } from "../components/layout/AppLayout";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { Dashboard } from "../pages/Dashboard"; // Assume this exists or mock it
 import { LoginPage } from "../pages/LoginPage";

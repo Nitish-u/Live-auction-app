@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { changePassword } from "@/lib/api";
+import { changePassword, getFriendlyErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { User, Shield, Palette, LogOut, Loader2 } from "lucide-react";
 
@@ -34,9 +34,8 @@ export default function Settings() {
             setCurrentPassword("");
             setNewPassword("");
         },
-        onError: (error: any) => {
-            const msg = error.response?.data?.error?.message || error.message || "Failed to change password";
-            toast.error(msg);
+        onError: (error: unknown) => {
+            toast.error(getFriendlyErrorMessage(error));
         },
     });
 

@@ -53,6 +53,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   buyerProposals BidProposal[] @relation("BuyerProposals")
   sellerProposals BidProposal[] @relation("SellerProposals")
+  proposalMessages ProposalMessage[] @relation("ProposalMessages")
 
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -265,6 +266,13 @@ enum ProposalStatus {
   COUNTERED
 }
 
+enum FinalizationStatus {
+  PENDING
+  BOTH_CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
 model BidProposal {
   id String @id @default(uuid())
   assetId String
@@ -280,9 +288,56 @@ model BidProposal {
   seller User @relation("SellerProposals", fields: [sellerId], references: [id])
   buyer User @relation("BuyerProposals", fields: [buyerId], references: [id])
   
+  messages ProposalMessage[]
+  finalization ProposalFinalization?
+  
   @@index([assetId])
   @@index([sellerId])
   @@index([buyerId])
   @@index([status])
 }
 
+
+model ProposalMessage {
+  id String @id @default(uuid())
+  proposalId String
+  senderId String
+  content String
+  
+  proposal BidProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  sender User @relation("ProposalMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([proposalId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model ProposalFinalization {
+  id String @id @default(uuid())
+  proposalId String @unique
+  
+  status FinalizationStatus @default(PENDING)
+  
+  buyerConfirmed Boolean @default(false)
+  sellerConfirmed Boolean @default(false)
+  buyerConfirmedAt DateTime?
+  sellerConfirmedAt DateTime?
+  
+  buyerDocsUrl String[] @default([])
+  sellerDocsUrl String[] @default([])
+  
+  platformCharge Decimal @default(0)
+  buyerPaysCharge Boolean @default(false)
+  
+  finalizedAt DateTime?
+  
+  proposal BidProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([status])
+  @@index([proposalId])
+}

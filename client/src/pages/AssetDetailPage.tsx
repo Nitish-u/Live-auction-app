@@ -9,34 +9,15 @@ import { AuctionStatus } from "@/components/assets/AuctionStatus"
 import { MetadataDisplay } from "@/components/assets/MetadataDisplay"
 import { RelatedItems } from "@/components/assets/RelatedItems"
 import { AssetStatusBadge } from "@/components/assets/AssetStatusBadge"
-import { api } from "@/lib/api"
+import { api, type BidProposal, type Asset, type Auction } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { ProposalForm } from "@/components/proposals/ProposalForm"
 import { ProposalsList } from "@/components/proposals/ProposalsList"
+import { ProposalChatBox } from "@/components/proposals/ProposalChatBox"
+import { FinalizationWindow } from "@/components/proposals/FinalizationWindow"
 
-interface Asset {
-    id: string
-    title: string
-    description: string
-    images: string[]
-    metadata?: Record<string, unknown>
-    status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED"
-    rejectionReason?: string
-    owner: {
-        id: string
-        email: string
-        displayName?: string
-        avatarUrl?: string
-    }
-}
 
-interface Auction {
-    id: string
-    status: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED"
-    startTime: string
-    endTime: string
-}
 
 export function AssetDetailPage() {
     const { id } = useParams<{ id: string }>()
@@ -72,6 +53,25 @@ export function AssetDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["/proposals/my-sent"] })
         queryClient.invalidateQueries({ queryKey: ["/proposals/my-assets"] })
     }
+
+    // Fetch accepted proposal
+    const { data: acceptedProposal } = useQuery({
+        queryKey: ["accepted-proposal", id, user?.id],
+        queryFn: async () => {
+            if (!user || !asset) return null;
+
+            if (user.id === asset.owner.id) {
+                // Seller: fetch proposals for this asset
+                const res = await api.get(`/proposals/my-assets?assetId=${id}`);
+                return res.data?.find((p: BidProposal) => p.status === "ACCEPTED");
+            } else {
+                // Buyer: fetch my proposals
+                const res = await api.get(`/proposals/my-sent`);
+                return res.data?.find((p: BidProposal) => p.assetId === id && p.status === "ACCEPTED");
+            }
+        },
+        enabled: !!id && !!user && !!asset && asset.status === "APPROVED"
+    })
 
     if (assetError) {
         return (
@@ -178,43 +178,54 @@ export function AssetDetailPage() {
             {/* Proposals section */}
             {asset.status === "APPROVED" && (
                 <div className="border-t pt-8">
-                    <h2 className="text-2xl font-bold mb-6">Make an Offer</h2>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Buyer side: Proposal form */}
-                        {user?.id !== asset.owner.id && (
-                            <div className="lg:col-span-2">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Propose an Amount</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <ProposalForm
-                                            assetId={asset.id}
-                                            sellerId={asset.owner.id}
-                                            onSuccess={refetchProposals}
-                                        />
-                                    </CardContent>
-                                </Card>
+                    {acceptedProposal ? (
+                        <div className="space-y-8">
+                            <h2 className="text-2xl font-bold mb-6">Negotiate & Finalize</h2>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <ProposalChatBox proposalId={acceptedProposal.id} />
+                                <FinalizationWindow proposalId={acceptedProposal.id} onFinalized={refetchProposals} />
                             </div>
-                        )}
+                        </div>
+                    ) : (
+                        <>
+                            <h2 className="text-2xl font-bold mb-6">Make an Offer</h2>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Buyer side: Proposal form */}
+                                {user?.id !== asset.owner.id && (
+                                    <div className="lg:col-span-2">
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle>Propose an Amount</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ProposalForm
+                                                    assetId={asset.id}
+                                                    sellerId={asset.owner.id}
+                                                    onSuccess={refetchProposals}
+                                                />
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                )}
 
-                        {/* Seller side: Incoming proposals */}
-                        {user?.id === asset.owner.id && (
-                            <div className="lg:col-span-2">
-                                <h3 className="font-semibold mb-4">Incoming Offers</h3>
-                                <ProposalsList assetId={asset.id} isSeller={true} />
-                            </div>
-                        )}
+                                {/* Seller side: Incoming proposals */}
+                                {user?.id === asset.owner.id && (
+                                    <div className="lg:col-span-2">
+                                        <h3 className="font-semibold mb-4">Incoming Offers</h3>
+                                        <ProposalsList assetId={asset.id} isSeller={true} />
+                                    </div>
+                                )}
 
-                        {/* Buyer side: My proposals */}
-                        {user?.id !== asset.owner.id && (
-                            <div>
-                                <h3 className="font-semibold mb-4">My Offers</h3>
-                                <ProposalsList assetId={asset.id} isSeller={false} />
+                                {/* Buyer side: My proposals */}
+                                {user?.id !== asset.owner.id && (
+                                    <div>
+                                        <h3 className="font-semibold mb-4">My Offers</h3>
+                                        <ProposalsList assetId={asset.id} isSeller={false} />
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </>
+                    )}
                 </div>
             )}
 

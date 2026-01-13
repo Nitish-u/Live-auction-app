@@ -46,7 +46,7 @@ export function ResetPassword() {
             await resetPassword(token, values.password);
             toast.success("Password reset successfully! Please login.");
             navigate("/login");
-        } catch (err: any) {
+        } catch (err: unknown) {
             const message = getFriendlyErrorMessage(err);
             setError(message);
             toast.error(message);

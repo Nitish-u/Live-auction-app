@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateMyProfile, api } from "@/lib/api";
+import { updateMyProfile, api, getFriendlyErrorMessage } from "@/lib/api";
 import type { UserPrivateProfile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,9 +43,9 @@ export function EditProfileDialog({ open, onOpenChange, profile }: EditProfileDi
             toast.success("Profile updated successfully");
             onOpenChange(false);
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
             console.error(err);
-            toast.error(err.response?.data?.message || "Failed to update profile");
+            toast.error(getFriendlyErrorMessage(err));
         },
     });
 

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import type { AxiosProgressEvent } from "axios"
 import { Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -68,7 +69,7 @@ export function AssetUploadInput({ onUpload, maxFiles = 5 }: AssetUploadInputPro
                 headers: {
                     "Content-Type": "multipart/form-data"
                 },
-                onUploadProgress: (event: any) => {
+                onUploadProgress: (event: AxiosProgressEvent) => {
                     if (event.total) {
                         const progressPercent = Math.round((event.loaded / event.total) * 100)
                         setProgress(progressPercent)
@@ -81,7 +82,7 @@ export function AssetUploadInput({ onUpload, maxFiles = 5 }: AssetUploadInputPro
             onUpload(urls)
             setFiles([])
             setProgress(0)
-        } catch (error) {
+        } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Upload failed"
             toast.error(message)
             console.error("Upload error:", error)

@@ -3,14 +3,9 @@ import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AssetStatusBadge } from "@/components/assets/AssetStatusBadge"
-import { api } from "@/lib/api"
+import { api, type Asset } from "@/lib/api"
 
-interface Asset {
-    id: string
-    title: string
-    status: string
-    createdAt: string
-}
+
 
 export function RecentAssetsWidget() {
     const navigate = useNavigate()
@@ -77,7 +72,7 @@ export function RecentAssetsWidget() {
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate">{asset.title}</p>
                             </div>
-                            <AssetStatusBadge status={asset.status as any} />
+                            <AssetStatusBadge status={asset.status} />
                         </div>
                     ))}
                 </div>

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Skeleton } from "@/components/ui/skeleton"
-import { api } from "@/lib/api"
+import { api, getFriendlyErrorMessage } from "@/lib/api"
 
 // Validation schema
 const scheduleAuctionSchema = z.object({
@@ -76,7 +76,7 @@ export function ScheduleAuctionForm() {
             const response = await api.get("/assets/my")
             // Filter for approved assets only
             // Backend returns { assets: [...] }
-            return response.data.assets.filter((asset: any) => asset.status === "APPROVED")
+            return response.data.assets.filter((asset: ApprovedAsset) => asset.status === "APPROVED")
         }
     })
 
@@ -114,8 +114,8 @@ export function ScheduleAuctionForm() {
 
             toast.success("Auction scheduled successfully!")
             navigate("/dashboard", { state: { tab: "seller" } })
-        } catch (error: any) {
-            const message = error.response?.data?.message || error.message || "Failed to schedule auction"
+        } catch (error: unknown) {
+            const message = getFriendlyErrorMessage(error)
             toast.error(message)
         } finally {
             setSubmitting(false)

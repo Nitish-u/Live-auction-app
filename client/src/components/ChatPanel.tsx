@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { fetchMessages, sendMessage } from "../lib/api";
+import { fetchMessages, sendMessage, type Message } from "../lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -49,7 +49,7 @@ export const ChatPanel = ({ auctionId, isParticipant }: ChatPanelProps) => {
             setContent("");
             setShouldAutoScroll(true); // Always scroll to bottom on own message
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
             console.error("Failed to send message", err);
             toast.error("Failed to send message");
         }
@@ -60,10 +60,10 @@ export const ChatPanel = ({ auctionId, isParticipant }: ChatPanelProps) => {
         if (messages && messages.length > 0) {
             if (shouldAutoScroll) {
                 scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-                setHasNewMessages(false);
+                setTimeout(() => setHasNewMessages(false), 0);
             } else {
                 // If not auto-scrolling, it means we are viewing history and a new message arrived
-                setHasNewMessages(true);
+                setTimeout(() => setHasNewMessages(true), 0);
             }
         }
     }, [messages, shouldAutoScroll]);
@@ -102,7 +102,11 @@ export const ChatPanel = ({ auctionId, isParticipant }: ChatPanelProps) => {
     }
 
     // Group Messages
-    const groupedMessages = messages?.reduce((acc: any[], msg: any, index: number) => {
+    interface GroupedMessage extends Message {
+        group: Message[];
+    }
+
+    const groupedMessages = messages?.reduce((acc: GroupedMessage[], msg: Message, index: number) => {
         const prevMsg = messages[index - 1];
         const isSameSender = prevMsg && prevMsg.sender.email === msg.sender.email;
         const isTimeClose = prevMsg && (new Date(msg.createdAt).getTime() - new Date(prevMsg.createdAt).getTime() < 60000); // 1 min
@@ -110,7 +114,7 @@ export const ChatPanel = ({ auctionId, isParticipant }: ChatPanelProps) => {
         if (isSameSender && isTimeClose) {
             acc[acc.length - 1].group.push(msg);
         } else {
-            acc.push({ ...msg, group: [msg] });
+            acc.push({ ...msg, group: [msg] } as GroupedMessage);
         }
         return acc;
     }, []) || [];
@@ -162,7 +166,7 @@ export const ChatPanel = ({ auctionId, isParticipant }: ChatPanelProps) => {
                                         )}
 
                                         <div className="space-y-1">
-                                            {group.group.map((msg: any, idx: number) => (
+                                            {group.group.map((msg: Message, idx: number) => (
                                                 <div
                                                     key={msg.id}
                                                     className={cn(

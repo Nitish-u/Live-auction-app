@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 export const adminAssetService = {
     getPendingAssets: async () => {
         return await prisma.asset.findMany({
-            where: { status: "PENDING_REVIEW" as "PENDING_REVIEW" },
+            where: { status: "PENDING_REVIEW" },
             orderBy: { createdAt: "asc" },
             include: {
                 owner: {
@@ -27,14 +27,14 @@ export const adminAssetService = {
             throw { statusCode: 404, message: "Asset not found", code: "NOT_FOUND" };
         }
 
-        if (asset.status !== "PENDING_REVIEW" as "PENDING_REVIEW") {
+        if (asset.status !== "PENDING_REVIEW") {
             throw { statusCode: 400, message: "Asset is not pending review", code: "INVALID_STATUS" };
         }
 
         return await prisma.asset.update({
             where: { id: assetId },
             data: {
-                status: "APPROVED" as "APPROVED",
+                status: "APPROVED",
                 rejectionReason: null,
             },
             select: {
@@ -51,14 +51,14 @@ export const adminAssetService = {
             throw { statusCode: 404, message: "Asset not found", code: "NOT_FOUND" };
         }
 
-        if (asset.status !== "PENDING_REVIEW" as "PENDING_REVIEW") {
+        if (asset.status !== "PENDING_REVIEW") {
             throw { statusCode: 400, message: "Asset is not pending review", code: "INVALID_STATUS" };
         }
 
         return await prisma.asset.update({
             where: { id: assetId },
             data: {
-                status: "REJECTED" as "REJECTED",
+                status: "REJECTED",
                 rejectionReason: reason,
             },
         });

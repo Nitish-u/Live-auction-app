@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 
 export const api = axios.create({
     baseURL: "/api/v1",
@@ -47,8 +47,8 @@ export const register = async (params: RegisterParams) => {
     return data;
 };
 
-export const getFriendlyErrorMessage = (error: any) => {
-    if (error.response) {
+export const getFriendlyErrorMessage = (error: unknown) => {
+    if (isAxiosError(error) && error.response) {
         // specific check for login failure to avoid generic "Please log in" message
         if (error.response.status === 401 && error.config?.url?.includes("/auth/login")) {
             return "Invalid email or password.";
@@ -56,7 +56,8 @@ export const getFriendlyErrorMessage = (error: any) => {
         if (error.response.status === 401) return "Please log in to perform this action.";
         if (error.response.status === 403) return "You do not have permission to do this.";
         if (error.response.status === 404) return "The requested resource was not found.";
-        return error.response.data?.message || "Something went wrong. Please try again.";
+        const data = error.response.data as { message?: string, error?: { message?: string } };
+        return data?.message || data?.error?.message || "Something went wrong. Please try again.";
     }
     return "Network error. Please check your connection.";
 };
@@ -68,6 +69,8 @@ export interface Auction {
     startTime: string;
     endTime: string;
     status: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED";
+    createdAt: string;
+    updatedAt: string;
     asset: {
         title: string;
         description: string;
@@ -102,8 +105,15 @@ export interface ListAuctionsParams {
     status?: "SCHEDULED" | "LIVE";
 }
 
+export interface PaginationMeta {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages?: number;
+}
+
 export const fetchAuctions = async (params: ListAuctionsParams) => {
-    const { data } = await api.get<{ data: Auction[]; meta: any }>("/auctions", {
+    const { data } = await api.get<{ data: Auction[]; meta: PaginationMeta }>("/auctions", {
         params,
     });
     return data;
@@ -166,6 +176,8 @@ export interface Message {
     sender: {
         id: string;
         email: string;
+        displayName?: string;
+        avatarUrl?: string;
     };
     createdAt: string;
 }
@@ -254,9 +266,20 @@ export const resetPassword = async (token: string, newPassword: string) => {
     return data;
 };
 
+export interface Notification {
+    id: string;
+    userId: string;
+    title: string;
+    message: string;
+    isRead: boolean;
+    type: string;
+    metadata?: Record<string, unknown>;
+    createdAt: string;
+}
+
 export const notifications = {
     async list(params?: { unread?: boolean; limit?: number }) {
-        const { data } = await api.get<{ items: any[], unreadCount: number }>("/notifications", { params });
+        const { data } = await api.get<{ items: Notification[], unreadCount: number }>("/notifications", { params });
         return data;
     },
     async markRead(id: string) {
@@ -269,9 +292,11 @@ export const notifications = {
 export interface Asset {
     id: string;
     title: string;
+    description: string;
     images: string[];
     owner: {
         id: string;
+        email: string;
         displayName: string | null;
         avatarUrl: string | null;
     };
@@ -279,8 +304,17 @@ export interface Asset {
         id: string;
         status: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED";
     } | null;
+    metadata?: {
+        year?: number;
+        condition?: string;
+        material?: string;
+        category?: string;
+        [key: string]: string | number | undefined;
+    };
     status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
     rejectionReason?: string | null;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface CreateAssetRequest {

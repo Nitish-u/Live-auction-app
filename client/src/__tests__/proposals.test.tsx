@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, waitFor, fireEvent } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import { ProposalForm } from "@/components/proposals/ProposalForm"
 import { ProposalCard } from "@/components/proposals/ProposalCard"
 import { ProposalsList } from "@/components/proposals/ProposalsList"

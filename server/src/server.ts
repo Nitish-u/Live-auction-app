@@ -6,7 +6,8 @@ import { initSocket } from "./socket/index";
 const PORT = env.PORT;
 
 const server = http.createServer(app);
-initSocket(server);
+const io = initSocket(server);
+app.set("io", io);
 
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

@@ -2,6 +2,7 @@
 import { Server as HttpServer } from "http";
 import { Server } from "socket.io";
 import { setIO } from "./socketServer";
+import { registerProposalSocket } from "./proposal.socket";
 
 export const initSocket = (httpServer: HttpServer) => {
     const io = new Server(httpServer, {
@@ -12,6 +13,7 @@ export const initSocket = (httpServer: HttpServer) => {
     });
 
     setIO(io);
+    registerProposalSocket(io);
 
     const auctionNamespace = io.of("/auctions");
 

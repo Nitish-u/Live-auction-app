@@ -7,11 +7,13 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import { type LoginParams, type RegisterParams } from "@/lib/api";
+
 export type AuthType = "login" | "register";
 
 interface AuthFormProps {
     type: AuthType;
-    onSubmit: (values: any) => Promise<void>;
+    onSubmit: (values: LoginParams | RegisterParams) => Promise<void>;
     isLoading: boolean;
     error?: string | null;
 }
@@ -38,7 +40,7 @@ export function AuthForm({ type, onSubmit, isLoading, error }: AuthFormProps) {
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<any>({
+    } = useForm<LoginParams | RegisterParams>({
         resolver: zodResolver(schema),
         defaultValues: {
             email: "",
@@ -110,8 +112,8 @@ export function AuthForm({ type, onSubmit, isLoading, error }: AuthFormProps) {
                                 disabled={isLoading}
                                 {...register("confirmPassword")}
                             />
-                            {errors.confirmPassword && (
-                                <p className="text-sm font-medium text-destructive">{errors.confirmPassword.message as string}</p>
+                            {(errors as unknown as Record<string, any>).confirmPassword && (
+                                <p className="text-sm font-medium text-destructive">{(errors as unknown as Record<string, any>).confirmPassword.message as string}</p>
                             )}
                         </div>
                     )}

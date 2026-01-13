@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchDisputes, resolveDispute } from "@/lib/api";
+import { fetchDisputes, resolveDispute, getFriendlyErrorMessage } from "@/lib/api";
 import {
     Table,
     TableBody,
@@ -32,8 +32,8 @@ export function DisputeManagerTab() {
             queryClient.invalidateQueries({ queryKey: ["admin-disputes"] });
             queryClient.invalidateQueries({ queryKey: ["dashboard", "admin"] });
         },
-        onError: (error: any) => {
-            toast.error(error.message || "Failed to resolve dispute");
+        onError: (error: unknown) => {
+            toast.error(getFriendlyErrorMessage(error));
         },
     });
 

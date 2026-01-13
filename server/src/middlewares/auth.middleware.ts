@@ -3,9 +3,16 @@ import { token } from "../utils/jwt";
 
 // Extend Express Request type
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace Express {
         interface Request {
-            user?: any;
+            user?: {
+                id: string;
+                sub: string;
+                email: string;
+                role: string;
+                [key: string]: unknown;
+            };
         }
     }
 }
@@ -27,7 +34,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 
 
     try {
-        const payload = token.verify(jwtToken) as any;
+        const payload = token.verify(jwtToken) as { sub: string; email: string; role: string;[key: string]: unknown };
         // Normalize user ID to be available as 'id' as well, since some controllers expect it
         req.user = { ...payload, id: payload.sub };
         next();

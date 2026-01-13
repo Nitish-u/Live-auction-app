@@ -6,7 +6,7 @@ interface MetadataDisplayProps {
         condition?: string
         material?: string
         category?: string
-        [key: string]: any
+        [key: string]: string | number | undefined
     }
 }
 

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { placeBid } from "../lib/api";
+import { placeBid, getFriendlyErrorMessage } from "../lib/api";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -34,10 +34,9 @@ export const BidForm = ({ auctionId, currentHighestBid }: BidFormProps) => {
             queryClient.invalidateQueries({ queryKey: ["bids", auctionId] });
             alert("Bid placed successfully!");
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
             // Handle Axios error format
-            const msg = err.response?.data?.error?.message || err.message || "Failed to place bid";
-            setError(msg);
+            setError(getFriendlyErrorMessage(err));
         }
     });
 

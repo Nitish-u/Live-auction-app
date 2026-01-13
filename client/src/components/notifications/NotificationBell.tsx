@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Bell, Check } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { notifications } from "@/lib/api";
+import { notifications, type Notification } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -79,19 +79,19 @@ export function NotificationBell() {
                         </div>
                     ) : (
                         <div className="flex flex-col">
-                            {notificationItems.map((item: any) => (
+                            {notificationItems.map((item: Notification) => (
                                 <DropdownMenuItem
                                     key={item.id}
                                     className="flex flex-col items-start p-4 cursor-default focus:bg-accent/50 group"
                                     onSelect={(e) => e.preventDefault()} // Keep open? Or navigate?
                                     // Clicking the item marks as read if unread?
-                                    onClick={() => !item.read && markReadMutation.mutate(item.id)}
+                                    onClick={() => !item.isRead && markReadMutation.mutate(item.id)}
                                 >
                                     <div className="flex w-full justify-between items-start gap-2">
-                                        <div className={cn("text-sm transition-colors", !item.read ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                                        <div className={cn("text-sm transition-colors", !item.isRead ? "font-semibold text-foreground" : "text-muted-foreground")}>
                                             {item.message}
                                         </div>
-                                        {!item.read && (
+                                        {!item.isRead && (
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -107,9 +107,9 @@ export function NotificationBell() {
                                         {new Date(item.createdAt).toLocaleDateString()}
                                     </div>
                                     {/* Optional: Add Link based on metadata */}
-                                    {item.metadata?.auctionId && (
+                                    {!!item.metadata?.auctionId && (
                                         <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-xs" asChild>
-                                            <Link to={`/auctions/${item.metadata.auctionId}`}>View Auction</Link>
+                                            <Link to={`/auctions/${item.metadata.auctionId as string}`}>View Auction</Link>
                                         </Button>
                                     )}
                                 </DropdownMenuItem>
