@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import logger from '../config/logger';
+import { MailService } from '../modules/mail/mail.service';
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -37,6 +39,7 @@ export const emailService = {
                 html,
             });
             console.log(`[EMAIL] Sent to ${to}`);
+            logger.info('')
         } catch (error) {
             console.error('[EMAIL] Error sending email:', error);
             throw error;
@@ -48,20 +51,13 @@ export const emailService = {
         const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
         const resetLink = `${clientUrl}/reset-password?token=${token}`;
 
-        const html = `
-      <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>Password Reset Request</h2>
-        <p>You requested to reset your password.</p>
-        <p>Click the link below to proceed:</p>
-        <p>
-          <a href="${resetLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
-        </p>
-        <p>Or copy this link: ${resetLink}</p>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-      </div>
-    `;
-
-        await emailService.sendEmail(to, 'Reset Your Password', html);
+        await MailService.sendMail({
+            to,
+            subject: 'Reset Your Password',
+            templateName: 'resetPassword',
+            variables: {
+                RESET_LINK: resetLink
+            }
+        });
     }
 };

@@ -212,7 +212,11 @@ export const bidService = {
                     userId: transactionResult.previousBidderId,
                     type: "OUTBID",
                     message: `You were outbid on ${transactionResult.assetTitle}`,
-                    metadata: { auctionId: data.auctionId }
+                    metadata: {
+                        auctionId: data.auctionId,
+                        currentBid: transactionResult.bid.amount.toString(),
+                        auctionTitle: transactionResult.assetTitle
+                    }
                 });
             }
         } catch (error) {

@@ -18,11 +18,17 @@ import notificationRoutes from "./routes/notification.routes";
 import uploadRoutes from "./routes/upload.routes";
 import proposalRoutes from "./routes/proposal.routes";
 import path from "path";
+import logger from "./config/logger";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use((req, res, next) => {
+  logger.info(`Incomming request: ${req.ip} ${req.method} ${req.url}`);
+  next();
+});
 
 // Serve static files from 'uploads' directory
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

@@ -1,5 +1,6 @@
 import { AuctionStatus } from "@prisma/client";
 import prisma from "../config/prisma";
+import { MailService } from "../modules/mail/mail.service";
 
 export const auctionService = {
     createAuction: async (userId: string, data: { assetId: string; startTime: string; endTime: string }) => {
@@ -29,7 +30,7 @@ export const auctionService = {
         }
 
         // 5. Create
-        return await prisma.auction.create({
+        const auction = await prisma.auction.create({
             data: {
                 assetId: data.assetId,
                 sellerId: userId,
@@ -38,6 +39,23 @@ export const auctionService = {
                 status: "SCHEDULED"
             }
         });
+
+        // Send Confirmation Email
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (user && user.email) {
+            const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+            MailService.sendMail({
+                to: user.email,
+                subject: 'Auction Created Successfully',
+                templateName: 'auctionCreated',
+                variables: {
+                    AUCTION_TITLE: asset.title,
+                    DASHBOARD_LINK: `${clientUrl}/dashboard/seller`
+                }
+            }).catch(console.error);
+        }
+
+        return auction;
     },
 
     listAuctions: async (options: {

@@ -1,5 +1,6 @@
 import { Notification, NotificationType } from "@prisma/client";
 import prisma from "../config/prisma";
+import { MailService } from "../modules/mail/mail.service";
 
 export class NotificationService {
     /**
@@ -11,14 +12,42 @@ export class NotificationService {
         message: string;
         metadata?: Record<string, any>;
     }): Promise<Notification> {
-        return prisma.notification.create({
+        const notification = await prisma.notification.create({
             data: {
                 userId: data.userId,
                 type: data.type,
                 message: data.message,
                 metadata: (data.metadata || {}) as any,
+                updatedAt: new Date(),
             },
         });
+
+        // Trigger Side-effect: Email
+        this.sendEmailNotification(data.userId, data.type, data.metadata || {}).catch(err => {
+            console.error(`[NOTIFICATION] Failed to send email for type ${data.type}:`, err);
+        });
+
+        return notification;
+    }
+
+    private async sendEmailNotification(userId: string, type: NotificationType, metadata: Record<string, any>) {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || !user.email) return;
+
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+        if (type === 'OUTBID') {
+            await MailService.sendMail({
+                to: user.email,
+                subject: 'You have been outbid',
+                templateName: 'outbid',
+                variables: {
+                    AUCTION_TITLE: metadata.auctionTitle || 'Auction',
+                    CURRENT_BID: metadata.currentBid || '0',
+                    AUCTION_LINK: `${clientUrl}/auctions/${metadata.auctionId}`
+                }
+            });
+        }
     }
 
     /**
