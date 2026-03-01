@@ -39,7 +39,6 @@ export const emailService = {
                 html,
             });
             console.log(`[EMAIL] Sent to ${to}`);
-            logger.info('')
         } catch (error) {
             console.error('[EMAIL] Error sending email:', error);
             throw error;

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
+import logger from "../config/logger";
 
 export const errorHandler = (
     err: any,
@@ -7,7 +8,13 @@ export const errorHandler = (
     res: Response,
     next: NextFunction
 ) => {
-    console.error("🔥 Error:", err);
+    logger.error(`Error processing request`, {
+        error: err.message,
+        stack: err.stack,
+        code: err.code || 'INTERNAL_ERROR',
+        path: req.path,
+        method: req.method
+    });
 
     if (err instanceof z.ZodError) {
         return res.status(400).json({

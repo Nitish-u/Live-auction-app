@@ -2,6 +2,8 @@ import prisma from "../config/prisma";
 import { placeBidSchema } from "../validators/bid.schema";
 import { getIO } from "../socket/socketServer";
 import { notificationService } from "./notification.service";
+import logger from "../config/logger";
+import { logEvent } from "../utils/logEvent";
 
 export const bidService = {
     placeBid: async (bidderId: string, data: { auctionId: string; amount: number }) => {
@@ -143,9 +145,8 @@ export const bidService = {
             // Proceed to updates
             // D (Real): Unlock previous (Strictly)
             if (currentHighestBid) {
-                console.error(`[DEBUG TX] Unlocking Previous. Bidder: ${currentHighestBid.bidderId}, Amount: ${currentHighestBid.amount}`);
+                // Transaction details (optional/removed per rules "No debug spam")
                 const prevWallet = await tx.wallet.findUnique({ where: { userId: currentHighestBid.bidderId } });
-                console.error(`[DEBUG TX] Previous Wallet State: Locked=${prevWallet?.locked}, Balance=${prevWallet?.balance}`);
 
                 if (prevWallet) {
                     const currentLocked = Number(prevWallet.locked);
@@ -153,7 +154,11 @@ export const bidService = {
                     let newLocked = currentLocked - unlockAmount;
 
                     if (newLocked < 0) {
-                        console.warn(`[WARNING] Negative Locked Balance Detected! forcing 0. Start: ${currentLocked}, Unlock: ${unlockAmount}`);
+                        logEvent("WALLET_BALANCE_CORRECTION", {
+                            userId: currentHighestBid.bidderId,
+                            currentLocked,
+                            unlockAmount
+                        });
                         newLocked = 0;
                     }
 
@@ -188,6 +193,13 @@ export const bidService = {
             };
         });
 
+        logEvent("BID_PLACED", {
+            auctionId: data.auctionId,
+            bidId: transactionResult.bid.id,
+            bidderId,
+            amount: transactionResult.bid.amount
+        });
+
         // Emit Socket Event (Fire & Forget)
         try {
             const io = getIO();
@@ -201,7 +213,7 @@ export const bidService = {
                 timestamp: transactionResult.bid.createdAt.toISOString()
             });
         } catch (error) {
-            console.error("Socket emit failed:", error);
+            logger.error("Socket emit failed", { event: "SOCKET_EMIT_FAILED", error: (error as Error).message });
             // Non-blocking
         }
 
@@ -220,7 +232,7 @@ export const bidService = {
                 });
             }
         } catch (error) {
-            console.error("Notification creation failed:", error);
+            logEvent("NOTIFICATION_FAILED", { error: (error as Error).message });
         }
 
         return { status: transactionResult.status, currentHighestBid: transactionResult.bid.amount };

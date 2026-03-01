@@ -1,5 +1,7 @@
 import prisma from "../config/prisma";
 import { ProposalStatus } from "@prisma/client";
+import logger from "../config/logger";
+import { logEvent } from "../utils/logEvent";
 
 export const proposalService = {
     // 1. Create Proposal
@@ -40,7 +42,7 @@ export const proposalService = {
         }
 
         // Create proposal
-        return await prisma.bidProposal.create({
+        const proposal = await prisma.bidProposal.create({
             data: {
                 assetId,
                 buyerId,
@@ -49,6 +51,16 @@ export const proposalService = {
                 status: "PENDING"
             }
         });
+
+        logEvent("PROPOSAL_CREATED", {
+            proposalId: proposal.id,
+            assetId,
+            buyerId,
+            sellerId: asset.ownerId,
+            amount: proposedAmount
+        });
+
+        return proposal;
     },
 
     // 2. Get Proposals (Buyer - Sent)
@@ -124,10 +136,19 @@ export const proposalService = {
             throw { statusCode: 400, message: "Proposal is not pending" };
         }
 
-        return await prisma.bidProposal.update({
+        const updatedProposal = await prisma.bidProposal.update({
             where: { id: proposalId },
             data: { status: "ACCEPTED" }
         });
+
+        logEvent("PROPOSAL_ACCEPTED", {
+            proposalId,
+            userId,
+            buyerId: proposal.buyerId,
+            assetId: proposal.assetId
+        });
+
+        return updatedProposal;
     },
 
     // 5. Reject Proposal
@@ -144,10 +165,18 @@ export const proposalService = {
             throw { statusCode: 403, message: "Not authorized" };
         }
 
-        return await prisma.bidProposal.update({
+        const updatedProposal = await prisma.bidProposal.update({
             where: { id: proposalId },
             data: { status: "REJECTED" }
         });
+
+        logEvent("PROPOSAL_REJECTED", {
+            proposalId,
+            userId,
+            buyerId: proposal.buyerId // Log buyer ID for notifying potentially
+        });
+
+        return updatedProposal;
     },
 
     // 6. Counter Proposal
@@ -173,7 +202,7 @@ export const proposalService = {
         }
 
         // Transaction to update old and create new
-        return await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx) => {
             // 1. Update original
             await tx.bidProposal.update({
                 where: { id: proposalId },
@@ -193,5 +222,14 @@ export const proposalService = {
                 }
             });
         });
+
+        logEvent("PROPOSAL_COUNTERED", {
+            originalProposalId: proposalId,
+            newProposalId: result.id,
+            userId,
+            newAmount
+        });
+
+        return result;
     }
 };

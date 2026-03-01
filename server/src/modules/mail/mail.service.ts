@@ -3,6 +3,7 @@ import path from 'path';
 import { transporter } from './mail.config';
 import { MailOptions } from './mail.types';
 import logger from '../../config/logger';
+import { logEvent } from '../../utils/logEvent';
 
 export class MailService {
     private static async loadTemplate(templateName: string): Promise<string> {
@@ -23,11 +24,11 @@ export class MailService {
         const { to, subject, templateName, variables } = options;
 
         if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-            console.warn('[MAIL] SMTP credentials not found. Logging email to console instead.');
-            console.log(`[MAIL MOCK] To: ${to}`);
-            console.log(`[MAIL MOCK] Subject: ${subject}`);
-            console.log(`[MAIL MOCK] Template: ${templateName}`);
-            console.log(`[MAIL MOCK] Variables:`, variables);
+            logEvent("INTEGRATION_MAIL_CONFIG_MISSING", {
+                to,
+                subject,
+                templateName
+            });
             return;
         }
 
@@ -49,10 +50,16 @@ export class MailService {
                 html,
             });
 
-            console.log(`[MAIL] Sent '${templateName}' email to ${to}`);
+            logEvent("INTEGRATION_EMAIL_SENT", {
+                to,
+                templateName
+            });
         } catch (error) {
-            console.error(`[MAIL] Error sending '${templateName}' email to ${to}:`, error);
-            logger.error(`[MAIL] Failed to send email: ${error}`);
+            logEvent("INTEGRATION_EMAIL_FAILED", {
+                to,
+                templateName,
+                error: (error as Error).message
+            });
             throw error;
         }
     }

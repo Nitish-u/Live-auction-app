@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { token } from "../utils/jwt";
+import logger from "../config/logger";
 
 // Extend Express Request type
 declare global {
@@ -21,14 +22,17 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        console.log("[AUTH] Missing or invalid Authorization header:", authHeader);
+        logger.warn(`[AUTH] Missing or invalid Authorization header`, {
+            ip: req.ip,
+            header: authHeader
+        });
         return res.status(401).json({ error: { message: "Unauthorized", code: "UNAUTHORIZED" } });
     }
 
     const jwtToken = authHeader.split(" ")[1];
 
     if (!jwtToken) {
-        console.log("[AUTH] Missing token part in header");
+        logger.warn(`[AUTH] Missing token part in header`, { ip: req.ip });
         return res.status(401).json({ error: { message: "Unauthorized", code: "UNAUTHORIZED" } });
     }
 
@@ -39,7 +43,10 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
         req.user = { ...payload, id: payload.sub };
         next();
     } catch (err) {
-        console.error("[AUTH] Token verification failed:", err);
+        logger.warn(`[AUTH] Token verification failed`, {
+            ip: req.ip,
+            error: (err as Error).message
+        });
         return res.status(401).json({ error: { message: "Invalid or expired token", code: "UNAUTHORIZED" } });
     }
 };

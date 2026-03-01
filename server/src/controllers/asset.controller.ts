@@ -4,7 +4,7 @@ import { createAssetSchema, updateAssetSchema } from "../validators/asset.schema
 
 export const createAsset = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user.sub;
+        const userId = req.user!.sub;
         const input = createAssetSchema.parse(req.body);
         const asset = await assetService.createAsset(userId, input);
         res.status(201).json(asset);
@@ -26,7 +26,7 @@ export const getAssetById = async (req: Request, res: Response, next: NextFuncti
 
 export const getMyAssets = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user.sub;
+        const userId = req.user!.sub;
         const assets = await assetService.getMyAssets(userId);
         res.json({ assets });
     } catch (error) {
@@ -36,7 +36,7 @@ export const getMyAssets = async (req: Request, res: Response, next: NextFunctio
 
 export const updateAsset = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user.sub;
+        const userId = req.user!.sub;
         const { id } = req.params;
         if (!id) throw { statusCode: 400, message: "Asset ID required" };
 
@@ -50,7 +50,7 @@ export const updateAsset = async (req: Request, res: Response, next: NextFunctio
 
 export const submitAsset = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user.sub;
+        const userId = req.user!.sub;
         const { id } = req.params;
         if (!id) throw { statusCode: 400, message: "Asset ID required" };
 

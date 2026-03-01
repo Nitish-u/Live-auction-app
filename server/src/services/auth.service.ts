@@ -6,6 +6,8 @@ import { emailService } from "./email.service";
 import { z } from "zod";
 import crypto from "crypto";
 import prisma from "../config/prisma";
+import logger from "../config/logger";
+import { logEvent } from "../utils/logEvent";
 
 export const authService = {
     register: async (input: z.infer<typeof registerSchema>) => {
@@ -95,11 +97,11 @@ export const authService = {
 
         // We return success even if user doesn't exist to prevent email enumeration
         if (!user) {
-            console.log(`[AUTH] Forgot password request for non-existent email: ${input.email}`);
+            logEvent("AUTH_PASSWORD_RESET_REQUEST", { email: input.email });
             return { message: "If an account with that email exists, we sent you a password reset link." };
         }
 
-        console.log(`[AUTH] Generating reset token for user: ${user.email}`);
+        logEvent("AUTH_PASSWORD_RESET_TOKEN", { userId: user.id });
 
         // Generate a random token
         const resetToken = crypto.randomBytes(32).toString("hex");
@@ -119,11 +121,15 @@ export const authService = {
 
         // Send email
         try {
-            console.log(`[AUTH] Attempting to send reset email to ${user.email}...`);
+            // Attempting to send reset email // Removed: Tracing
             await emailService.sendPasswordResetEmail(user.email, resetToken);
-            console.log(`[AUTH] Reset email successfully sent to ${user.email}`);
+            logEvent("INTEGRATION_EMAIL_SENT", { email: user.email, type: "PASSWORD_RESET" });
         } catch (error) {
-            console.error(`[AUTH] Failed to send reset email to ${user.email}:`, error);
+            logEvent("INTEGRATION_EMAIL_FAILED", {
+                email: user.email,
+                type: "PASSWORD_RESET",
+                error: (error as Error).message
+            });
             // In a real app we might want to throw here or retry, but usually we just log
         }
 

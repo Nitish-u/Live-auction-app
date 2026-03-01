@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../config/prisma";
+import logger from "../config/logger";
+import { logEvent } from "../utils/logEvent";
 
 export const walletService = {
     getWallet: async (userId: string) => {
@@ -10,7 +12,7 @@ export const walletService = {
     },
 
     addFunds: async (userId: string, amount: number) => {
-        return await prisma.$transaction(async (tx) => {
+        const transactionResult = await prisma.$transaction(async (tx) => {
             // 1. Get wallet
             const wallet = await tx.wallet.findUniqueOrThrow({
                 where: { userId },
@@ -37,5 +39,13 @@ export const walletService = {
 
             return updatedWallet;
         });
+
+        logEvent("WALLET_DEPOSIT", {
+            userId,
+            amount,
+            newBalance: transactionResult.balance
+        });
+
+        return transactionResult;
     },
 };

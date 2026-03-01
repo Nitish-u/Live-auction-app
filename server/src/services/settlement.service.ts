@@ -1,6 +1,8 @@
 
 import prisma from "../config/prisma";
 import { notificationService } from "./notification.service";
+import logger from "../config/logger";
+import { logEvent } from "../utils/logEvent";
 
 export const settlementService = {
     settleAuction: async (auctionId: string) => {
@@ -47,7 +49,8 @@ export const settlementService = {
         const bidAmount = Number(highestBid.amount);
 
         if (locked < bidAmount) {
-            console.error(`[CRITICAL] Invariant Violation: Wallet locked ${locked} < Bid ${bidAmount}. Auction: ${auctionId}, Bidder: ${highestBid.bidderId}`);
+            // prettier-ignore
+            logger.error("Invariant Violation:", { event: "INVARIANT_VIOLATION_FUNDS", auctionId, bidderId: highestBid.bidderId, locked, bidAmount });
             throw { statusCode: 500, message: "Invariant Violation: Insufficient locked funds for settlement" };
         }
 
@@ -91,8 +94,16 @@ export const settlementService = {
                 });
             }
         } catch (error) {
-            console.error("Failed to create AUCTION_WON notification:", error);
+            logEvent("NOTIFICATION_FAILED", { error: (error as Error).message });
         }
+
+        logEvent("AUCTION_SETTLED", {
+            event: "AUCTION_SETTLED",
+            auctionId,
+            escrowId: result.escrowId,
+            winnerId: result.winnerId,
+            amount: result.amount
+        });
 
         return result;
     }

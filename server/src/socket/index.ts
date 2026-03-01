@@ -3,6 +3,8 @@ import { Server as HttpServer } from "http";
 import { Server } from "socket.io";
 import { setIO } from "./socketServer";
 import { registerProposalSocket } from "./proposal.socket";
+import logger from "../config/logger";
+import { logEvent } from "../utils/logEvent";
 
 export const initSocket = (httpServer: HttpServer) => {
     const io = new Server(httpServer, {
@@ -18,24 +20,24 @@ export const initSocket = (httpServer: HttpServer) => {
     const auctionNamespace = io.of("/auctions");
 
     auctionNamespace.on("connection", (socket) => {
-        console.log(`Socket connected: ${socket.id}`);
+        logEvent("INTEGRATION_SOCKET_CONNECTED", { namespace: "/auctions", socketId: socket.id });
 
         socket.on("join_auction", ({ auctionId }) => {
             if (auctionId) {
                 socket.join(`auction:${auctionId}`);
-                console.log(`Socket ${socket.id} joined auction:${auctionId}`);
+                logEvent("SOCKET_JOINED_ROOM", { socketId: socket.id, room: `auction:${auctionId}` });
             }
         });
 
         socket.on("leave_auction", ({ auctionId }) => {
             if (auctionId) {
                 socket.leave(`auction:${auctionId}`);
-                console.log(`Socket ${socket.id} left auction:${auctionId}`);
+                logEvent("SOCKET_LEFT_ROOM", { socketId: socket.id, room: `auction:${auctionId}` });
             }
         });
 
         socket.on("disconnect", () => {
-            console.log(`Socket disconnected: ${socket.id}`);
+            logEvent("INTEGRATION_SOCKET_DISCONNECTED", { namespace: "/auctions", socketId: socket.id });
         });
     });
 

@@ -4,7 +4,7 @@ import { addFundsSchema } from "../validators/wallet.schema";
 
 export const getWallet = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user.sub;
+        const userId = req.user!.sub;
         const wallet = await walletService.getWallet(userId);
         res.json(wallet);
     } catch (error) {
@@ -14,7 +14,7 @@ export const getWallet = async (req: Request, res: Response, next: NextFunction)
 
 export const addFunds = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user.sub;
+        const userId = req.user!.sub;
         const { amount } = addFundsSchema.parse(req.body);
         const updatedWallet = await walletService.addFunds(userId, amount);
         res.json(updatedWallet);

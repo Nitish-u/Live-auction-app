@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import crypto from "crypto";
 import { errorHandler } from "./middlewares/errorHandler";
 import healthRoutes from "./routes/health.routes";
 import authRoutes from "./routes/auth.routes";
@@ -26,7 +27,36 @@ app.use(cors());
 app.use(express.json());
 
 app.use((req, res, next) => {
-  logger.info(`Incomming request: ${req.ip} ${req.method} ${req.url}`);
+  const start = Date.now();
+  const requestId = req.headers['x-request-id'] || crypto.randomUUID();
+  req.headers['x-request-id'] = requestId as string; // Ensure downstream uses it if needed
+
+  // Log Request
+  logger.info(`Incoming request`, {
+    method: req.method,
+    url: req.url,
+    ip: req.ip,
+    requestId,
+    headers: {
+      'user-agent': req.get('user-agent'),
+      'content-type': req.get('content-type')
+    }
+  });
+
+  // Log Response on finish
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
+
+    logger.log(level, `Request completed`, {
+      method: req.method,
+      url: req.url,
+      status: res.statusCode,
+      duration: `${duration}ms`,
+      requestId
+    });
+  });
+
   next();
 });
 

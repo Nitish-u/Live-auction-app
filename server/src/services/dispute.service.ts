@@ -1,6 +1,8 @@
 
 import prisma from "../config/prisma";
 import { notificationService } from "./notification.service";
+import logger from "../config/logger";
+import { logEvent } from "../utils/logEvent";
 
 export const disputeService = {
     raiseDispute: async (buyerId: string, escrowId: string, reason: string) => {
@@ -41,6 +43,12 @@ export const disputeService = {
                 reason,
                 status: "OPEN"
             }
+        });
+
+        logEvent("DISPUTE_OPENED", {
+            disputeId: dispute.id,
+            escrowId,
+            buyerId
         });
 
         return dispute;
@@ -134,12 +142,13 @@ export const disputeService = {
             const message = `Dispute for ${assetTitle} was resolved: ${resolution}`;
 
             // Notify Buyer
+            // Notify Buyer
             await notificationService.create({
                 userId: finalDispute.escrow.buyerId,
                 type: "DISPUTE_RESOLVED",
                 message,
                 metadata: { disputeId, resolution }
-            }).catch(e => console.error(e));
+            }).catch(e => logEvent("NOTIFICATION_FAILED", { error: e.message }));
 
             // Notify Seller
             await notificationService.create({
@@ -147,7 +156,15 @@ export const disputeService = {
                 type: "DISPUTE_RESOLVED",
                 message,
                 metadata: { disputeId, resolution }
-            }).catch(e => console.error(e));
+            }).catch(e => logEvent("NOTIFICATION_FAILED", { error: e.message }));
+
+            logEvent("DISPUTE_RESOLVED", {
+                disputeId,
+                resolution,
+                adminId,
+                escrowId: finalDispute.escrowId,
+                amount: finalDispute.escrow.amount
+            });
 
             return finalDispute;
         }

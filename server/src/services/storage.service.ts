@@ -2,6 +2,8 @@ import fs from "fs"
 import path from "path"
 import AWS from "aws-sdk"
 import { storageConfig, isCloudEnabled, isLocalEnabled } from "../config/storage"
+import logger from "../config/logger"
+import { logEvent } from "../utils/logEvent"
 
 export interface UploadResult {
     url: string
@@ -47,7 +49,7 @@ async function uploadFile(
                 isCloud: true
             }
         } catch (error) {
-            console.warn("Cloud upload failed, falling back to local storage:", error)
+            logEvent("INTEGRATION_STORAGE_ERROR", { error, context: "CLOUD_UPLOAD_FAILED" });
         }
     }
 
@@ -68,14 +70,18 @@ export async function uploadAssetImage(
     directory: string = "assets"
 ): Promise<UploadResult> {
     const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
-    return uploadFile(file, directory, allowedMimes, 5 * 1024 * 1024)
+    const result = await uploadFile(file, directory, allowedMimes, 5 * 1024 * 1024)
+    logEvent("INTEGRATION_STORAGE_UPLOAD", { type: "ASSET_IMAGE", isCloud: result.isCloud });
+    return result;
 }
 
 export async function uploadProposalDoc(
     file: Express.Multer.File
 ): Promise<UploadResult> {
     const allowedMimes = ["application/pdf", "image/jpeg", "image/png"]
-    return uploadFile(file, "proposals/docs", allowedMimes, 10 * 1024 * 1024) // 10MB
+    const result = await uploadFile(file, "proposals/docs", allowedMimes, 10 * 1024 * 1024) // 10MB
+    logEvent("INTEGRATION_STORAGE_UPLOAD", { type: "PROPOSAL_DOC", isCloud: result.isCloud });
+    return result;
 }
 
 async function uploadToCloud(

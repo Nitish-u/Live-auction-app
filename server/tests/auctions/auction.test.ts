@@ -136,7 +136,8 @@ describe("FEATURE 6: Auction Scheduling", () => {
             // This file uses `request(app)` so it hits the controller.
             // The controller was updated to parse query params.
             // So `GET /api/v1/auctions` with no params should work and use defaults.
-            const response = await request(app).get("/api/v1/auctions");
+            // We filter by assetId to ensure we find our specific auction even if DB has many entries.
+            const response = await request(app).get(`/api/v1/auctions?assetId=${approvedAssetId}`);
             expect(response.status).toBe(200);
             // Response format changed to { data: [], meta: {} }
             const found = response.body.data.find((a: any) => a.assetId === approvedAssetId);

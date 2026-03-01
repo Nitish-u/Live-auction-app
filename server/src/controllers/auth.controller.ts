@@ -17,8 +17,8 @@ export const register = async (
   try {
     const input = registerSchema.parse(req.body);
     const result = await authService.register(input);
+    logger.info(`User registered`, { userId: result.user.id, email: result.user.email });
     res.status(201).json(result);
-    logger.info(`User registerd: ${result.user.id}`);
   } catch (error) {
     next(error);
   }
@@ -32,6 +32,7 @@ export const login = async (
   try {
     const input = loginSchema.parse(req.body);
     const result = await authService.login(input);
+    logger.info(`User logged in`, { userId: result.user.id, email: result.user.email });
     res.json(result);
   } catch (error) {
     next(error);
@@ -54,6 +55,7 @@ export const changePassword = async (
     }
     const input = changePasswordSchema.parse(req.body);
     const result = await authService.changePassword(userId, input);
+    logger.info(`Password changed`, { userId });
     res.json(result);
   } catch (error) {
     next(error);
@@ -68,6 +70,7 @@ export const forgotPassword = async (
   try {
     const input = forgotPasswordSchema.parse(req.body);
     const result = await authService.forgotPassword(input);
+    logger.info(`Forgot password request initiated`, { email: input.email, ip: req.ip });
     res.json(result);
   } catch (error) {
     next(error);
@@ -82,6 +85,7 @@ export const resetPassword = async (
   try {
     const input = resetPasswordSchema.parse(req.body);
     const result = await authService.resetPassword(input);
+    logger.info(`Password reset completed successfully`);
     res.json(result);
   } catch (error) {
     next(error);

@@ -1,6 +1,8 @@
 import { AuctionStatus } from "@prisma/client";
 import prisma from "../config/prisma";
 import { MailService } from "../modules/mail/mail.service";
+import logger from "../config/logger";
+import { logEvent } from "../utils/logEvent";
 
 export const auctionService = {
     createAuction: async (userId: string, data: { assetId: string; startTime: string; endTime: string }) => {
@@ -40,6 +42,12 @@ export const auctionService = {
             }
         });
 
+        logEvent("AUCTION_SCHEDULED", {
+            auctionId: auction.id,
+            assetId: data.assetId,
+            userId
+        });
+
         // Send Confirmation Email
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (user && user.email) {
@@ -52,7 +60,10 @@ export const auctionService = {
                     AUCTION_TITLE: asset.title,
                     DASHBOARD_LINK: `${clientUrl}/dashboard/seller`
                 }
-            }).catch(console.error);
+            }).catch(err => logEvent("INTEGRATION_EMAIL_FAILED", {
+                userId,
+                error: (err as Error).message
+            }));
         }
 
         return auction;
@@ -147,9 +158,17 @@ export const auctionService = {
             throw { statusCode: 400, message: "Only SCHEDULED auctions can be cancelled" };
         }
 
-        return await prisma.auction.update({
+        const result = await prisma.auction.update({
             where: { id: auctionId },
             data: { status: "CANCELLED" }
         });
+
+        logEvent("AUCTION_CANCELLED", {
+            auctionId,
+            userId,
+            status: "CANCELLED"
+        });
+
+        return result;
     }
 };
